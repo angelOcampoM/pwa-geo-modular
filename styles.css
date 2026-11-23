@@ -1,0 +1,578 @@
+/* =====================================================================
+   styles.css - RUMBO.pwa
+   Autor: Angel Daniel Ocampo Martinez
+
+   Concepto visual: "HUD de navegación" (misma línea visual que LENTE.pwa)
+   - Fondo azul noche (#0f172a = theme_color del manifest)
+   - Acentos verde lima, como las marcas de enfoque / retícula
+   - Acento naranja tipo "REC" para las acciones principales
+   - Coordenadas y etiquetas en fuente monoespaciada (estilo HUD)
+   Diseño mobile-first: botones grandes y una sola columna.
+   ===================================================================== */
+
+:root {
+  --fondo: #0f172a;          /* theme_color / background_color del manifest */
+  --superficie: #131d33;
+  --superficie-2: #1a2742;
+  --linea: #2a3a5c;
+  --texto: #e8edf7;
+  --texto-suave: #8b9bbd;
+  --rec: #ff6b2c;            /* naranja: acciones principales */
+  --enfoque: #c6f432;        /* verde lima: retícula, precisión alta */
+  --aproximada: #fbbf24;     /* ámbar: precisión aproximada */
+  --peligro: #ff5d73;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* El atributo hidden debe ganar siempre, aunque una clase use display:flex/grid */
+[hidden] {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  color: var(--texto);
+  background-color: var(--fondo);
+  /* Cuadrícula sutil de fondo, como la retícula de un mapa */
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+  /* Zonas seguras del iPhone (notch y barra inferior) en modo standalone */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------------------------------------------------------------------
+   Encabezado con la marca y el autor
+   --------------------------------------------------------------------- */
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid var(--linea);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Logo: brújula dibujada solo con CSS (anillo lima + aguja) */
+.brujula {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid var(--enfoque);
+  flex-shrink: 0;
+}
+
+/* Aguja de dos colores: norte naranja, sur claro */
+.aguja {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 24px;
+  margin: -12px 0 0 -4px;
+  background: linear-gradient(to bottom, var(--rec) 50%, var(--texto) 50%);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: orientar 4s ease-in-out infinite;
+}
+
+@keyframes orientar {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(-12deg); }
+}
+
+.encabezado h1 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.encabezado h1 span {
+  color: var(--rec);
+  letter-spacing: 0;
+}
+
+.autor {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+}
+
+/* ---------------------------------------------------------------------
+   Contenedor y tarjetas
+   --------------------------------------------------------------------- */
+.contenedor {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.tarjeta h2 {
+  margin: 4px 0 12px;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tarjeta p,
+.tarjeta li {
+  line-height: 1.55;
+  font-size: 0.93rem;
+}
+
+.tarjeta ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+/* Etiquetas pequeñas estilo HUD */
+.etiqueta {
+  display: block;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--enfoque);
+}
+
+.texto-suave {
+  color: var(--texto-suave);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  background: #0a1122;
+  color: var(--enfoque);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--linea);
+}
+
+/* Diagnóstico de plataforma: franja verde lima */
+.tarjeta-diagnostico {
+  border-left: 5px solid var(--enfoque);
+}
+
+.tarjeta-diagnostico p:last-child {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+}
+
+/* Aviso de Pre-Permiso: franja naranja lateral para llamar la atención sin asustar */
+.tarjeta-aviso {
+  border-left: 5px solid var(--rec);
+  background: linear-gradient(135deg, #1d2338 0%, var(--superficie) 60%);
+}
+
+/* Plan B: borde punteado, como una ruta alternativa */
+.tarjeta-planb {
+  border: 2px dashed var(--aproximada);
+}
+
+/* Instrucciones de iOS */
+.tarjeta-nota {
+  border-left: 5px solid var(--enfoque);
+}
+
+.instrucciones {
+  background: #0a1122;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.instrucciones ul {
+  margin: 6px 0 0;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  background: #0a1122;
+  color: var(--texto);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--texto-suave);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--enfoque);
+  box-shadow: 0 0 0 3px rgba(198, 244, 50, 0.15);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.tarjeta-planb select,
+.tarjeta-planb input {
+  margin: 6px 0 10px;
+}
+
+/* ---------------------------------------------------------------------
+   Botones (mínimo 48px de alto para tocarlos fácil con el dedo)
+   --------------------------------------------------------------------- */
+.btn {
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid var(--linea);
+  border-radius: 999px;          /* forma de píldora */
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.2s;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);        /* efecto de "presionar" en el móvil */
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: wait;
+}
+
+/* Botón principal: naranja tipo "REC" */
+.btn-principal {
+  background: var(--rec);
+  border-color: var(--rec);
+  color: #1a0b03;
+  box-shadow: 0 6px 20px rgba(255, 107, 44, 0.3);
+}
+
+/* Botón secundario: contorno verde lima */
+.btn-secundario {
+  background: transparent;
+  border-color: var(--enfoque);
+  color: var(--enfoque);
+}
+
+/* Botón de instalar (encabezado) */
+.btn-claro {
+  min-height: 40px;
+  padding: 8px 14px;
+  background: var(--enfoque);
+  border-color: var(--enfoque);
+  color: #10180a;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.fila-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fila-botones .btn {
+  font-size: 0.85rem;
+  padding: 12px 10px;
+}
+
+/* ---------------------------------------------------------------------
+   Resultado de la ubicación (panel HUD)
+   --------------------------------------------------------------------- */
+.resultado {
+  position: relative;
+  background: #05080f;
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Esquinas de retícula sobre el panel de coordenadas */
+.resultado::before,
+.resultado::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 0 solid var(--enfoque);
+  pointer-events: none;
+}
+
+.resultado::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 4px;
+}
+
+.resultado::after {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 4px;
+}
+
+.coordenadas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.coordenadas strong {
+  display: block;
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  color: var(--texto);
+}
+
+.precision {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.precision strong {
+  font-family: var(--mono);
+}
+
+/* Insignia de calidad de señal */
+.insignia {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #0f172a;
+  background: var(--texto-suave);
+}
+
+.insignia.alta {
+  background: var(--enfoque);
+}
+
+.insignia.aproximada {
+  background: var(--aproximada);
+}
+
+/* Escala logarítmica de precisión (1 m a 10 km) */
+.escala {
+  margin: 16px 0 6px;
+}
+
+.escala-barra {
+  position: relative;
+  height: 8px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--enfoque) 0%, var(--enfoque) 37%, var(--aproximada) 37%, var(--aproximada) 62%, var(--peligro) 62%);
+}
+
+/* Marca que indica dónde cae la precisión actual */
+.escala-marca {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--fondo);
+  border: 3px solid var(--texto);
+  box-shadow: 0 0 10px rgba(232, 237, 247, 0.4);
+  transition: left 0.6s ease;
+}
+
+.escala-textos {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--texto-suave);
+}
+
+.meta {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.meta a {
+  color: var(--rec);
+  font-weight: 700;
+}
+
+.resultado-manual strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  color: var(--aproximada);
+}
+
+/* Paquete JSON del reporte (estilo consola) */
+.paquete {
+  margin-top: 14px;
+}
+
+.paquete pre {
+  margin: 6px 0 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0a1122;
+  border: 1px solid var(--linea);
+  color: var(--enfoque);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  overflow-x: auto;
+}
+
+/* ---------------------------------------------------------------------
+   Lista de sucursales
+   --------------------------------------------------------------------- */
+.lista-sucursales {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-sucursales li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--linea);
+  font-size: 0.9rem;
+}
+
+.lista-sucursales li strong {
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.lista-sucursales li.mas-cercana {
+  color: var(--enfoque);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------
+   Mensaje de estado: aviso flotante estilo consola
+   --------------------------------------------------------------------- */
+.mensaje {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  max-width: 508px;
+  margin: 0 auto;
+  z-index: 20;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #0a1122;
+  border: 1px solid var(--linea);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--texto-suave);
+}
+
+.mensaje::before {
+  content: "> ";
+  color: var(--enfoque);
+}
+
+.mensaje.cargando::before {
+  content: "◌ ";
+  display: inline-block;
+  animation: girar 1s linear infinite;
+}
+
+.mensaje.ok {
+  color: var(--enfoque);
+}
+
+.mensaje.error {
+  color: var(--peligro);
+  border-color: var(--peligro);
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------------
+   Pie de página con el autor
+   --------------------------------------------------------------------- */
+.pie {
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  padding: 8px 16px 90px; /* espacio para el aviso flotante */
+}
+
+.pie strong {
+  color: var(--texto);
+}

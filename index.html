@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>RUMBO.pwa · Geolocalización Consciente</title>
+  <meta name="description" content="PWA con geolocalización modular, pre-permiso ético y plan B manual">
+  <meta name="author" content="Angel Daniel Ocampo Martinez">
+
+  <!-- Instalabilidad: manifiesto y color del sistema (rutas relativas por GitHub Pages) -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- iOS: icono de inicio y modo standalone (Safari no usa los iconos del manifest) -->
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="RUMBO">
+
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <header class="encabezado">
+    <div class="marca">
+      <span class="brujula" aria-hidden="true"><span class="aguja"></span></span>
+      <div>
+        <h1>RUMBO<span>.pwa</span></h1>
+        <p class="autor">Angel Daniel Ocampo Martinez</p>
+      </div>
+    </div>
+    <!-- Se muestra solo cuando Chrome dispara 'beforeinstallprompt' -->
+    <button id="btn-instalar" class="btn btn-claro" type="button" hidden>Instalar app</button>
+  </header>
+
+  <main class="contenedor">
+
+    <!-- Instrucciones de instalación en iPhone (iOS nunca dispara beforeinstallprompt) -->
+    <section id="aviso-ios" class="tarjeta tarjeta-nota" hidden>
+      <h2>Instala RUMBO en tu iPhone</h2>
+      <p>Toca <strong>Compartir</strong> en Safari y elige <strong>"Agregar a pantalla de inicio"</strong>.
+         Ojo: Safari y la app instalada guardan el permiso de ubicación <strong>por separado</strong>, así que la app te lo pedirá de nuevo.</p>
+    </section>
+
+    <!-- Diagnóstico del dispositivo: explica qué precisión esperar (Android / iOS / sin GPS) -->
+    <section class="tarjeta tarjeta-diagnostico">
+      <p class="etiqueta">Diagnóstico de dispositivo</p>
+      <p id="diagnostico-plataforma">Detectando...</p>
+    </section>
+
+    <!-- ===================== USO 1: REPORTE TÉCNICO ===================== -->
+    <section class="tarjeta">
+      <p class="etiqueta">Uso 1 · Reporte técnico</p>
+      <h2>Nueva incidencia</h2>
+      <form id="form-reporte">
+        <input type="text" id="titulo" placeholder="Título (ej. Fuga en tubería 3)" required>
+        <textarea id="descripcion" placeholder="Detalle técnico..." required></textarea>
+
+        <!-- Botón del Pre-Permiso: NO pide la ubicación, primero revisa el estado del permiso -->
+        <button id="btn-adjuntar-ubicacion" class="btn btn-secundario" type="button">📍 Adjuntar mi ubicación</button>
+
+        <!-- Resultado de la lectura (coordenadas + indicador de precisión) -->
+        <div id="resultado-ubicacion" class="resultado" hidden>
+          <div class="coordenadas">
+            <div><span class="etiqueta">Latitud</span><strong id="res-latitud">--</strong></div>
+            <div><span class="etiqueta">Longitud</span><strong id="res-longitud">--</strong></div>
+          </div>
+          <div class="precision">
+            <span id="res-insignia" class="insignia">--</span>
+            <span>Margen de error: <strong id="res-precision">--</strong></span>
+          </div>
+          <!-- Escala de precisión: de 1 m (GPS) a 10 km (IP) -->
+          <div class="escala" aria-hidden="true">
+            <div class="escala-barra"><span id="escala-marca" class="escala-marca"></span></div>
+            <div class="escala-textos"><span>1 m · GPS</span><span>300 m · Wi-Fi</span><span>10 km · IP</span></div>
+          </div>
+          <p class="meta">Lectura: <span id="res-hora">--</span> ·
+            <a id="res-mapa" href="#" target="_blank" rel="noopener">Ver en mapa ↗</a></p>
+        </div>
+
+        <!-- Resultado del Plan B (zona elegida a mano) -->
+        <div id="resultado-manual" class="resultado resultado-manual" hidden>
+          <span class="etiqueta">Zona manual</span>
+          <strong id="res-zona">--</strong>
+        </div>
+
+        <button class="btn btn-principal" type="submit">Generar reporte</button>
+      </form>
+
+      <!-- Paquete final que se enviaría al servidor o se encolaría en IndexedDB -->
+      <div id="paquete-reporte" class="paquete" hidden>
+        <p class="etiqueta">Paquete listo para enviar / encolar en IndexedDB</p>
+        <pre id="paquete-json"></pre>
+      </div>
+    </section>
+
+    <!-- ===================== USO 2: SUCURSAL MÁS CERCANA ===================== -->
+    <section class="tarjeta">
+      <p class="etiqueta">Uso 2 · Lectura rápida de baja precisión</p>
+      <h2>Sucursal más cercana</h2>
+      <p class="texto-suave">Reutiliza el mismo <code>geo-helper.js</code> con <code>enableHighAccuracy: false</code> y <code>maximumAge: 60000</code>.</p>
+      <button id="btn-sucursales" class="btn btn-secundario" type="button">🧭 Buscar sucursales cercanas</button>
+      <ol id="lista-sucursales" class="lista-sucursales" hidden></ol>
+    </section>
+
+    <!-- Mensajes de estado / error -->
+    <p id="mensaje" class="mensaje" aria-live="polite" hidden></p>
+
+    <!-- ===================== PRE-PERMISO (estado 'prompt') ===================== -->
+    <section id="aviso-ubicacion" class="tarjeta tarjeta-aviso" hidden>
+      <h2>¿Por qué pedimos tu ubicación?</h2>
+      <p>Necesitamos tu ubicación aproximada para <strong>adjuntar las coordenadas al reporte técnico</strong>
+         y <strong>calcular la sucursal más cercana</strong>.</p>
+      <ul>
+        <li>Se lee <strong>una sola vez</strong>, solo cuando tú lo pides (no te rastreamos).</li>
+        <li>Puedes rechazarla: siempre podrás elegir tu zona manualmente.</li>
+      </ul>
+      <p class="texto-suave">Al continuar, tu navegador mostrará su propio aviso de permiso.</p>
+      <div class="fila-botones">
+        <button id="btn-cancelar-ubicacion" class="btn btn-secundario" type="button">Elegir zona a mano</button>
+        <!-- Este clic es el gesto directo del usuario que exige Safari en iOS -->
+        <button id="btn-confirmar-ubicacion" class="btn btn-principal" type="button">Compartir mi ubicación</button>
+      </div>
+    </section>
+
+    <!-- ===================== PLAN B: SELECTOR MANUAL DE ZONA ===================== -->
+    <section id="plan-b" class="tarjeta tarjeta-planb" hidden>
+      <h2>Elige tu zona manualmente</h2>
+      <p id="plan-b-motivo" class="texto-suave"></p>
+      <!-- Instrucciones para reactivar el permiso (solo si está 'denied') -->
+      <div id="instrucciones-permiso" class="instrucciones" hidden>
+        <strong>¿Cómo reactivar la ubicación?</strong>
+        <ul>
+          <li><b>Chrome / Android:</b> toca el 🔒 junto a la URL → Permisos → Ubicación → Permitir y recarga.</li>
+          <li><b>iPhone:</b> Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari.</li>
+        </ul>
+      </div>
+      <label for="select-zona" class="etiqueta">Zona / ciudad</label>
+      <select id="select-zona">
+        <option value="">Selecciona una zona...</option>
+      </select>
+      <input type="text" id="referencia-direccion" placeholder="Referencia o dirección (opcional)">
+      <div class="fila-botones">
+        <button id="btn-reintentar" class="btn btn-secundario" type="button">Reintentar ubicación</button>
+        <button id="btn-usar-zona" class="btn btn-principal" type="button">Usar esta zona</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="pie">
+    Desarrollado por <strong>Angel Daniel Ocampo Martinez</strong><br>
+    Desarrollo de Aplicaciones Web Progresivas · Tema 6.3
+  </footer>
+
+  <!-- ORDEN IMPORTANTE: primero el helper, después la app que lo usa -->
+  <script src="./geo-helper.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
